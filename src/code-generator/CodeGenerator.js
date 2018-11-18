@@ -1,6 +1,7 @@
 import domEvents from './dom-events-to-record'
 import pptrActions from './pptr-actions'
 import Block from './Block'
+const filenamify = require('filenamify');
 
 const importPuppeteer = `const puppeteer = require('puppeteer');\n`
 
@@ -34,6 +35,7 @@ export default class CodeGenerator {
     this._allFrames = {}
 
     this._hasNavigation = false
+    this._url_count = new Map()
   }
 
   generate (events) {
@@ -65,6 +67,9 @@ export default class CodeGenerator {
         case 'keydown':
           if (keyCode === 9) {
             this._blocks.push(this._handleKeyDown(selector, value, keyCode))
+          }
+          else if (keyCode === 44) {
+            this._blocks.push(this._handleScreenShot(events[i].url))
           }
           break
         case 'click':
@@ -162,6 +167,23 @@ export default class CodeGenerator {
     if (this._options.waitForNavigation) {
       block.addLine({type: pptrActions.NAVIGATION, value: `await navigationPromise`})
     }
+    return block
+  }
+
+  _handleScreenShot(url) {
+    let urlTofilename = filenamify(url, { replacement: '_' })
+    if (this._url_count[url] != undefined) {
+      this._url_count[url] += 1;
+    } else if (this._url_count[url] === undefined) {
+      this._url_count[url] = 0;
+    }
+    let count = this._url_count[url]
+    let filename = `${urlTofilename}`;
+    if (count > 0) {
+      filename = `${urlTofilename}(${count})`;
+    }
+    const block = new Block(this._frameId)
+    block.addLine({ type: domEvents.KEYDOWN, value: `await ${this._frame}.screenshot({path: '${filename}.png'})` })
     return block
   }
 

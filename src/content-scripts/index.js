@@ -86,7 +86,8 @@ class EventRecorder {
       action: e.type,
       keyCode: e.keyCode ? e.keyCode : null,
       href: e.target.href ? e.target.href : null,
-      coordinates: getCoordinates(e)
+      coordinates: getCoordinates(e),
+      url: e.srcElement.baseURI ? e.srcElement.baseURI : null,
     }
     this.sendMessage(msg)
   }
